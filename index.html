@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genshin Randomizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0e17;
+  --bg2: #1a1828;
+  --bg3: #231f35;
+  --card: #1e1b2e;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0ecff;
+  --text2: #9b96b8;
+  --text3: #5e5a7a;
+  --accent: #c8a96e;
+  --accent2: #e8c98a;
+  --gold: #f0c060;
+  --purple4: #9b7fd4;
+  --glow: rgba(200,169,110,0.15);
+
+  --pyro-bg:#3d1a10; --pyro-c:#ff8c5a; --pyro-badge:#ff6a35;
+  --hydro-bg:#0d2540; --hydro-c:#5ab4ff; --hydro-badge:#3d9fe0;
+  --anemo-bg:#0d2d25; --anemo-c:#4dffd4; --anemo-badge:#2ad4a8;
+  --electro-bg:#20143d; --electro-c:#c084fc; --electro-badge:#a855f7;
+  --dendro-bg:#142d0d; --dendro-c:#86efac; --dendro-badge:#4ade80;
+  --cryo-bg:#0d2035; --cryo-c:#93c5fd; --cryo-badge:#60a5fa;
+  --geo-bg:#2d1f0d; --geo-c:#fcd34d; --geo-badge:#f59e0b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* stars bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 70%, rgba(200,169,110,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 90%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 15%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 85%, rgba(200,169,110,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 55%, rgba(255,255,255,0.2) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 2rem; }
+.header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 50%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.05em;
+  text-shadow: none;
+}
+.header p { color: var(--text2); font-size: 0.85rem; margin-top: 0.3rem; letter-spacing: 0.05em; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; background: var(--bg2); border-radius: 12px; padding: 5px; border: 1px solid var(--border); }
+.tab { flex: 1; padding: 9px 8px; font-size: 13px; font-weight: 600; font-family: 'Nunito', sans-serif; border: none; border-radius: 8px; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.2s; }
+.tab.active { background: var(--bg3); color: var(--accent2); box-shadow: 0 0 12px var(--glow); }
+
+/* Result card */
+.result-area { margin-bottom: 1.5rem; }
+.result-card {
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 100px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.result-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--res-glow, transparent);
+  opacity: 0.06;
+  transition: all 0.3s;
+}
+.res-icon {
+  width: 64px; height: 64px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  background: var(--res-icon-bg, var(--bg3));
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+}
+.res-info { flex: 1; min-width: 0; }
+.res-name { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.res-name.placeholder { color: var(--text3); font-weight: 400; font-size: 1rem; }
+.res-sub { font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; }
+.res-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
+
+/* Roll button */
+.roll-btn {
+  width: 100%;
+  padding: 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(200,169,110,0.12) 0%, rgba(240,192,96,0.08) 100%);
+  color: var(--accent2);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 0.5rem;
+}
+.roll-btn:hover { background: linear-gradient(135deg, rgba(200,169,110,0.22) 0%, rgba(240,192,96,0.16) 100%); box-shadow: 0 0 20px var(--glow); }
+.roll-btn:active { transform: scale(0.98); }
+
+.count-label { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 1.5rem; }
+
+/* Filters */
+.filter-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; }
+.filter-group { margin-bottom: 10px; }
+.filter-group:last-child { margin-bottom: 0; }
+.filter-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.fbtn { padding: 4px 11px; font-size: 11px; font-weight: 600; font-family: 'Nunito', sans-serif; border: 1px solid var(--border2); border-radius: 99px; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.fbtn.active { background: var(--bg3); color: var(--text); border-color: rgba(200,169,110,0.4); }
+.fbtn.own-only { border-color: rgba(200,169,110,0.6); color: var(--accent); }
+.fbtn.own-only.active { background: rgba(200,169,110,0.15); color: var(--accent2); border-color: var(--accent); }
+
+/* Roster section */
+.roster-section { margin-top: 1.5rem; }
+.roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.roster-title { font-family: 'Cinzel', serif; font-size: 0.85rem; color: var(--accent); letter-spacing: 0.05em; }
+.roster-actions { display: flex; gap: 6px; }
+.roster-btn { padding: 4px 12px; font-size: 11px; font-family: 'Nunito', sans-serif; font-weight: 600; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.roster-btn:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
+
+/* Character grid */
+.char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+.char-card {
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  position: relative;
+  user-select: none;
+}
+.char-card:hover { border-color: var(--border2); }
+.char-card.owned {
+  border-color: rgba(200,169,110,0.5);
+  background: rgba(200,169,110,0.07);
+}
+.char-card.owned::after {
+  content: '✓';
+  position: absolute;
+  top: 3px; right: 5px;
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.char-el { font-size: 16px; margin-bottom: 2px; }
+.char-name { font-size: 10px; font-weight: 600; color: var(--text2); line-height: 1.2; }
+.char-card.owned .char-name { color: var(--text); }
+.char-s5 .char-name { color: var(--gold); }
+.char-card.owned.char-s5 .char-name { color: var(--gold); }
+
+/* Element colors for tags */
+.el-pyro    { background: var(--pyro-bg);    color: var(--pyro-c); }
+.el-hydro   { background: var(--hydro-bg);   color: var(--hydro-c); }
+.el-anemo   { background: var(--anemo-bg);   color: var(--anemo-c); }
+.el-electro { background: var(--electro-bg); color: var(--electro-c); }
+.el-dendro  { background: var(--dendro-bg);  color: var(--dendro-c); }
+.el-cryo    { background: var(--cryo-bg);    color: var(--cryo-c); }
+.el-geo     { background: var(--geo-bg);     color: var(--geo-c); }
+
+.reg-tag { background: rgba(255,255,255,0.06); color: var(--text2); }
+.type-tag { background: rgba(255,255,255,0.04); color: var(--text3); }
+.s5-tag { background: rgba(240,192,96,0.12); color: var(--gold); }
+.s4-tag { background: rgba(155,127,212,0.15); color: var(--purple4); }
+
+/* Divider */
+.divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+/* Anim */
+@keyframes pop { 0%{transform:scale(0.9);opacity:0} 100%{transform:scale(1);opacity:1} }
+.result-card.popped { animation: pop 0.25s ease; }
+
+@media (max-width: 480px) {
+  .char-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <h1>✦ Genshin Randomizer ✦</h1>
+  <p>Патч 6.5 · 120+ персонажей · 44 мировых босса · 13 еженедельных</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('chars')">Персонажи</button>
+  <button class="tab" onclick="switchTab('world')">Мировые боссы</button>
+  <button class="tab" onclick="switchTab('weekly')">Еженедельные</button>
+</div>
+
+<!-- Result -->
+<div class="result-area">
+  <div class="result-card" id="res-card">
+    <div class="res-icon" id="res-icon">✦</div>
+    <div class="res-info">
+      <div class="res-name placeholder" id="res-name">Нажмите кнопку ниже</div>
+      <div class="res-sub" id="res-sub">и получите случайный результат</div>
+      <div class="res-tags" id="res-tags"></div>
+    </div>
+  </div>
+</div>
+
+<button class="roll-btn" onclick="roll()">⚂ Случайный выбор</button>
+<div class="count-label" id="count-lbl"></div>
+
+<!-- Chars filters -->
+<div id="chars-section">
+  <div class="filter-section">
+    <div class="filter-group">
+      <div class="filter-label">Из ростера</div>
+      <div class="filter-row">
+        <button class="fbtn own-only" id="own-only-btn" onclick="toggleOwnOnly()">Только мои персонажи</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Элемент</div>
+      <div class="filter-row" id="el-filter"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Регион</div>
+      <div class="filter-row" id="reg-filter"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Редкость</div>
+      <div class="filter-row">
+        <button class="fbtn active" onclick="toggleF(cRarity,'5',this)">★★★★★</button>
+        <button class="fbtn active" onclick="toggleF(cRarity,'4',this)">★★★★</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roster -->
+  <div class="roster-section">
+    <div class="roster-header">
+      <span class="roster-title">МОЙ РОСТЕР</span>
+      <div class="roster-actions">
+        <span id="owned-count" style="font-size:11px;color:var(--text3);align-self:center;margin-right:4px"></span>
+        <button class="roster-btn" onclick="selectAll()">Все</button>
+        <button class="roster-btn" onclick="clearAll()">Сбросить</button>
+      </div>
+    </div>
+    <div class="char-grid" id="char-grid"></div>
+  </div>
+</div>
+
+<!-- World boss filters -->
+<div id="world-section" style="display:none">
+  <div class="filter-section">
+    <div class="filter-group">
+      <div class="filter-label">Регион</div>
+      <div class="filter-row" id="wr-filter"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Тип</div>
+      <div class="filter-row">
+        <button class="fbtn active" onclick="toggleF(wTypes,'hypostasis',this)">Гипостазисы</button>
+        <button class="fbtn active" onclick="toggleF(wTypes,'flower',this)">Цветы / Лозы</button>
+        <button class="fbtn active" onclick="toggleF(wTypes,'dragon',this)">Драконы</button>
+        <button class="fbtn active" onclick="toggleF(wTypes,'mech',this)">Механические</button>
+        <button class="fbtn active" onclick="toggleF(wTypes,'other',this)">Прочие</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Weekly boss filters -->
+<div id="weekly-section" style="display:none">
+  <div class="filter-section">
+    <div class="filter-group">
+      <div class="filter-label">Регион</div>
+      <div class="filter-row" id="wkr-filter"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ====== DATA ======
+const EL = [
+  {id:'pyro',    n:'Пиро',    e:'🔥'},
+  {id:'hydro',   n:'Гидро',   e:'💧'},
+  {id:'anemo',   n:'Анемо',   e:'🌀'},
+  {id:'electro', n:'Электро', e:'⚡'},
+  {id:'dendro',  n:'Дендро',  e:'🌿'},
+  {id:'cryo',    n:'Крио',    e:'❄️'},
+  {id:'geo',     n:'Гео',     e:'🪨'},
+];
+const EL_BG = {
+  pyro:'#3d1a10',hydro:'#0d2540',anemo:'#0d2d25',
+  electro:'#20143d',dendro:'#142d0d',cryo:'#0d2035',geo:'#2d1f0d'
+};
+const EL_C = {
+  pyro:'#ff8c5a',hydro:'#5ab4ff',anemo:'#4dffd4',
+  electro:'#c084fc',dendro:'#86efac',cryo:'#93c5fd',geo:'#fcd34d'
+};
+const REG_BG = {
+  'Мондштадт':'#0d1a30','Ли Юэ':'#2d1f0d','Инадзума':'#1a0d2d',
+  'Сумеру':'#0d2010','Фонтейн':'#0d2a20','Натлан':'#2d100d',
+  'Снежная':'#0d1a28','Нод-Край':'#1a1030','Другое':'#1a1a1a'
+};
+const REG_C = {
+  'Мондштадт':'#5ab4ff','Ли Юэ':'#fcd34d','Инадзума':'#c084fc',
+  'Сумеру':'#86efac','Фонтейн':'#4dffd4','Натлан':'#ff8c5a',
+  'Снежная':'#93c5fd','Нод-Край':'#a78bfa','Другое':'#9b96b8'
+};
+
+const CHARS = [
+  // Мондштадт
+  {n:'Эмбер',el:'pyro',r:'Мондштадт',s:4},
+  {n:'Кэйа',el:'cryo',r:'Мондштадт',s:4},
+  {n:'Лиза',el:'electro',r:'Мондштадт',s:4},
+  {n:'Барбара',el:'hydro',r:'Мондштадт',s:4},
+  {n:'Венти',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Дилюк',el:'pyro',r:'Мондштадт',s:5},
+  {n:'Разор',el:'electro',r:'Мондштадт',s:4},
+  {n:'Беннетт',el:'pyro',r:'Мондштадт',s:4},
+  {n:'Ноэлль',el:'geo',r:'Мондштадт',s:4},
+  {n:'Фишль',el:'electro',r:'Мондштадт',s:4},
+  {n:'Кли',el:'pyro',r:'Мондштадт',s:5},
+  {n:'Жан',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Альбедо',el:'geo',r:'Мондштадт',s:5},
+  {n:'Розария',el:'cryo',r:'Мондштадт',s:4},
+  {n:'Эола',el:'cryo',r:'Мондштадт',s:5},
+  {n:'Мика',el:'cryo',r:'Мондштадт',s:4},
+  {n:'Ягода',el:'anemo',r:'Мондштадт',s:4},
+  {n:'Дурин',el:'pyro',r:'Мондштадт',s:5},
+  {n:'Варка',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Диона',el:'cryo',r:'Мондштадт',s:4},
+  {n:'Мона',el:'hydro',r:'Мондштадт',s:5},
+  {n:'Джинн',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Сахароза',el:'anemo',r:'Мондштадт',s:4},
+  {n:'Далия',el:'hydro',r:'Мондштадт',s:4},
+  {n:'Прюн',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Лоэн',el:'cryo',r:'Мондштадт',s:5},
+  // Ли Юэ
+  {n:'Сяо',el:'anemo',r:'Ли Юэ',s:5},
+  {n:'Гань Юй',el:'cryo',r:'Ли Юэ',s:5},
+  {n:'Чжун Ли',el:'geo',r:'Ли Юэ',s:5},
+  {n:'Ху Тао',el:'pyro',r:'Ли Юэ',s:5},
+  {n:'Кэ Цин',el:'electro',r:'Ли Юэ',s:5},
+  {n:'Нин Гуан',el:'geo',r:'Ли Юэ',s:4},
+  {n:'Е Лань',el:'hydro',r:'Ли Юэ',s:5},
+  {n:'Янь Фэй',el:'pyro',r:'Ли Юэ',s:4},
+  {n:'Бэй Доу',el:'electro',r:'Ли Юэ',s:4},
+  {n:'Сян Лин',el:'pyro',r:'Ли Юэ',s:4},
+  {n:'Чун Юнь',el:'cryo',r:'Ли Юэ',s:4},
+  {n:'Синь Цю',el:'hydro',r:'Ли Юэ',s:4},
+  {n:'Синь Янь',el:'pyro',r:'Ли Юэ',s:4},
+  {n:'Юнь Цзинь',el:'geo',r:'Ли Юэ',s:4},
+  {n:'Сяолу',el:'geo',r:'Ли Юэ',s:4},
+  {n:'Яо Яо',el:'dendro',r:'Ли Юэ',s:4},
+  {n:'Ци Ци',el:'cryo',r:'Ли Юэ',s:5},
+  {n:'Ка Мин',el:'pyro',r:'Ли Юэ',s:4},
+  {n:'Сянь Юнь',el:'anemo',r:'Ли Юэ',s:5},
+  {n:'Шэнь Хэ',el:'cryo',r:'Ли Юэ',s:5},
+  {n:'Цзы Бай',el:'geo',r:'Ли Юэ',s:5},
+  {n:'Лань Янь',el:'anemo',r:'Ли Юэ',s:4},
+  {n:'Бай Чжу',el:'dendro',r:'Ли Юэ',s:5},
+  // Инадзума
+  {n:'Аяка',el:'cryo',r:'Инадзума',s:5},
+  {n:'Кадзуха',el:'anemo',r:'Инадзума',s:5},
+  {n:'Ёимия',el:'pyro',r:'Инадзума',s:5},
+  {n:'Райдэн',el:'electro',r:'Инадзума',s:5},
+  {n:'Кокоми',el:'hydro',r:'Инадзума',s:5},
+  {n:'Итто',el:'geo',r:'Инадзума',s:5},
+  {n:'Яэ Мико',el:'electro',r:'Инадзума',s:5},
+  {n:'Аято',el:'hydro',r:'Инадзума',s:5},
+  {n:'Саю',el:'anemo',r:'Инадзума',s:4},
+  {n:'Сара',el:'electro',r:'Инадзума',s:4},
+  {n:'Тома',el:'pyro',r:'Инадзума',s:4},
+  {n:'Горо',el:'geo',r:'Инадзума',s:4},
+  {n:'Хэйдзо',el:'anemo',r:'Инадзума',s:4},
+  {n:'Синобу',el:'electro',r:'Инадзума',s:4},
+  {n:'Кирара',el:'dendro',r:'Инадзума',s:4},
+  {n:'Тиори',el:'geo',r:'Инадзума',s:5},
+  {n:'Мидзуки',el:'anemo',r:'Инадзума',s:5},
+  // Сумеру
+  {n:'Тигнари',el:'dendro',r:'Сумеру',s:5},
+  {n:'Нилу',el:'hydro',r:'Сумеру',s:5},
+  {n:'Нахида',el:'dendro',r:'Сумеру',s:5},
+  {n:'Странник',el:'anemo',r:'Сумеру',s:5},
+  {n:'Аль-Хайтам',el:'dendro',r:'Сумеру',s:5},
+  {n:'Дэхья',el:'pyro',r:'Сумеру',s:5},
+  {n:'Коллеи',el:'dendro',r:'Сумеру',s:4},
+  {n:'Дори',el:'electro',r:'Сумеру',s:4},
+  {n:'Кандакия',el:'hydro',r:'Сумеру',s:4},
+  {n:'Сайно',el:'electro',r:'Сумеру',s:5},
+  {n:'Лайла',el:'cryo',r:'Сумеру',s:4},
+  {n:'Фарузан',el:'anemo',r:'Сумеру',s:4},
+  {n:'Кавех',el:'dendro',r:'Сумеру',s:4},
+  {n:'Сетос',el:'electro',r:'Сумеру',s:4},
+  // Фонтейн
+  {n:'Нёвиллет',el:'hydro',r:'Фонтейн',s:5},
+  {n:'Лини',el:'pyro',r:'Фонтейн',s:5},
+  {n:'Фурина',el:'hydro',r:'Фонтейн',s:5},
+  {n:'Навия',el:'geo',r:'Фонтейн',s:5},
+  {n:'Клоринда',el:'electro',r:'Фонтейн',s:5},
+  {n:'Инеффа',el:'electro',r:'Фонтейн',s:5},
+  {n:'Эскофье',el:'cryo',r:'Фонтейн',s:5},
+  {n:'Сиджвин',el:'hydro',r:'Фонтейн',s:5},
+  {n:'Эмилия',el:'dendro',r:'Фонтейн',s:5},
+  {n:'Ризли',el:'cryo',r:'Фонтейн',s:5},
+  {n:'Линетт',el:'anemo',r:'Фонтейн',s:4},
+  {n:'Фремине',el:'cryo',r:'Фонтейн',s:4},
+  {n:'Шарлотта',el:'cryo',r:'Фонтейн',s:4},
+  {n:'Шеврёз',el:'pyro',r:'Фонтейн',s:4},
+  // Натлан
+  {n:'Муалани',el:'hydro',r:'Натлан',s:5},
+  {n:'Кинич',el:'dendro',r:'Натлан',s:5},
+  {n:'Шилонен',el:'geo',r:'Натлан',s:5},
+  {n:'Мавуика',el:'pyro',r:'Натлан',s:5},
+  {n:'Ситлали',el:'cryo',r:'Натлан',s:5},
+  {n:'Часка',el:'anemo',r:'Натлан',s:5},
+  {n:'Иансан',el:'electro',r:'Натлан',s:4},
+  {n:'Качина',el:'geo',r:'Натлан',s:4},
+  {n:'Оророн',el:'electro',r:'Натлан',s:4},
+  {n:'Айно',el:'hydro',r:'Натлан',s:4},
+  {n:'Ифа',el:'anemo',r:'Натлан',s:4},
+  {n:'Вареса',el:'electro',r:'Натлан',s:5},
+  // Снежная
+  {n:'Тарталья',el:'hydro',r:'Снежная',s:5},
+  {n:'Арлекино',el:'pyro',r:'Снежная',s:5},
+  {n:'Николь Рейн',el:'pyro',r:'Снежная',s:5},
+  // Нод-Край
+  {n:'Флинс',el:'electro',r:'Нод-Край',s:5},
+  {n:'Нефер',el:'dendro',r:'Нод-Край',s:5},
+  {n:'Коломбина',el:'hydro',r:'Нод-Край',s:5},
+  {n:'Лаума',el:'dendro',r:'Нод-Край',s:5},
+  {n:'Иллуги',el:'geo',r:'Нод-Край',s:4},
+  {n:'Линнея',el:'geo',r:'Нод-Край',s:5},
+  {n:'Ягода (Нод-Край)',el:'anemo',r:'Нод-Край',s:4},
+  {n:'Инеффа (Нод-Край)',el:'electro',r:'Нод-Край',s:5},
+  // Тейват / Другое
+  {n:'Путешественник',el:'anemo',r:'Другое',s:5},
+  {n:'Скирк',el:'cryo',r:'Другое',s:5},
+  {n:'Элой',el:'cryo',r:'Другое',s:5},
+  {n:'Дайнслейф',el:'anemo',r:'Другое',s:5},
+];
+
+const WORLD_BOSSES = [
+  // Мондштадт (4)
+  {n:'Анемо гипостазис',r:'Мондштадт',t:'hypostasis',e:'🌀'},
+  {n:'Крио папоротник',r:'Мондштадт',t:'flower',e:'❄️'},
+  {n:'Электро гипостазис',r:'Мондштадт',t:'hypostasis',e:'⚡'},
+  {n:'Крио гипостазис',r:'Мондштадт',t:'hypostasis',e:'❄️'},
+  // Ли Юэ (6)
+  {n:'Гео гипостазис',r:'Ли Юэ',t:'hypostasis',e:'🪨'},
+  {n:'Океанид',r:'Ли Юэ',t:'other',e:'💧'},
+  {n:'Пиро орхидея',r:'Ли Юэ',t:'flower',e:'🔥'},
+  {n:'Древний геовишап',r:'Ли Юэ',t:'dragon',e:'🐲'},
+  {n:'Суаньни-отшельник',r:'Ли Юэ',t:'other',e:'🦁'},
+  {n:'Змей руин',r:'Ли Юэ',t:'mech',e:'🤖'},
+  // Инадзума (7)
+  {n:'Бесконечный механический массив',r:'Инадзума',t:'mech',e:'🤖'},
+  {n:'Пиро гипостазис',r:'Инадзума',t:'hypostasis',e:'🔥'},
+  {n:'Магу Кэнки',r:'Инадзума',t:'mech',e:'⚔️'},
+  {n:'Гидро гипостазис',r:'Инадзума',t:'hypostasis',e:'💧'},
+  {n:'Манифестация грома',r:'Инадзума',t:'other',e:'⚡'},
+  {n:'Золотой волчий вожак',r:'Инадзума',t:'other',e:'🐺'},
+  {n:'Стая вишапов глубин',r:'Инадзума',t:'dragon',e:'🐉'},
+  // Сумеру (7)
+  {n:'Электро папоротник',r:'Сумеру',t:'flower',e:'⚡'},
+  {n:'Пернатый плесенник',r:'Сумеру',t:'other',e:'🍄'},
+  {n:'Дракон вечных бедствий',r:'Сумеру',t:'dragon',e:'🐉'},
+  {n:'Унут Сетеха',r:'Сумеру',t:'other',e:'🐍'},
+  {n:'Дендро гипостазис',r:'Сумеру',t:'hypostasis',e:'🌿'},
+  {n:'Алгоритм матрицы оператора наблюдения',r:'Сумеру',t:'mech',e:'🤖'},
+  {n:'Чудовищный креститель',r:'Сумеру',t:'other',e:'🦂'},
+  // Фонтейн (6)
+  {n:'Сюита ледяного ветра',r:'Фонтейн',t:'other',e:'❄️'},
+  {n:'Морской конёк тысячелетней жемчужины',r:'Фонтейн',t:'other',e:'🐴'},
+  {n:'Экспериментальный генератор поля',r:'Фонтейн',t:'mech',e:'⚡'},
+  {n:'Гидротульпа',r:'Фонтейн',t:'flower',e:'💧'},
+  {n:'Легат големов',r:'Фонтейн',t:'mech',e:'🏛️'},
+  {n:'Император огня и железа',r:'Фонтейн',t:'other',e:'🦀'},
+  // Натлан (7)
+  {n:'Прожорливый горный король-юмказавр',r:'Натлан',t:'dragon',e:'🦖'},
+  {n:'Кукузавр-тиран золотого пламени',r:'Натлан',t:'dragon',e:'🦕'},
+  {n:'Автоматон таинственного источника: Конфигуратор',r:'Натлан',t:'mech',e:'🤖'},
+  {n:'Сумрачная папилла',r:'Натлан',t:'flower',e:'🌺'},
+  {n:'Говорящая с духами отшельница',r:'Натлан',t:'other',e:'🦅'},
+  {n:'Статуя лавового дракона',r:'Натлан',t:'dragon',e:'🌋'},
+  {n:'Автоматон таинственного источника: Надсмотрщик',r:'Натлан',t:'mech',e:'🤖'},
+  // Нод-Край (8)
+  {n:'Лучезарный мотылёк-призрак',r:'Нод-Край',t:'other',e:'🦋'},
+  {n:'Железный утёнок',r:'Нод-Край',t:'mech',e:'🦆'},
+  {n:'Повелитель морозной ночи',r:'Нод-Край',t:'other',e:'🌙'},
+  {n:'Сверхтяжёлый сухопутный крейсер: Мобильная крепость',r:'Нод-Край',t:'mech',e:'🚂'},
+  {n:'Повелитель скрытых глубин: Шёпот кошмаров',r:'Нод-Край',t:'other',e:'🕷️'},
+  {n:'Лучезарный лунный геккон',r:'Нод-Край',t:'other',e:'🦎'},
+  {n:'Созерцатель: Падший страж',r:'Нод-Край',t:'mech',e:'🤖'},
+];
+
+const WEEKLY_BOSSES = [
+  // Мондштадт
+  {n:'Ужас бури (Двалин)',r:'Мондштадт',e:'🐲',d:'Логово Ужаса бури'},
+  {n:'Лупус Бореалис (Андриус)',r:'Мондштадт',e:'🐺',d:'Испытание Волчьего лорда'},
+  // Ли Юэ
+  {n:'Аждаха',r:'Ли Юэ',e:'🐉',d:'Под древом подавления'},
+  {n:'Чайльд (Тарталья)',r:'Ли Юэ',e:'🌊',d:'Золотая палата'},
+  // Инадзума
+  {n:'Синьора',r:'Инадзума',e:'🌹',d:'Тэнсюкаку'},
+  {n:'Магацу Митакэ Наруками но Микото',r:'Инадзума',e:'⚡',d:'Видение вечного шторма'},
+  // Сумеру
+  {n:'Сёки но Ками (Странник)',r:'Сумеру',e:'💨',d:'Мастерская Дзерури'},
+  {n:'Страж оазиса Апепа',r:'Сумеру',e:'🐍',d:'Владение начинаний'},
+  // Фонтейн
+  {n:'Всепожирающий нарвал',r:'Фонтейн',e:'🐳',d:'Пасть пучины'},
+  {n:'Слуга (Арлекино)',r:'Фонтейн',e:'🎭',d:'Руины на востоке Фонтейна'},
+  // Натлан
+  {n:'Владыка истлевшего первобытного пламени',r:'Натлан',e:'🦁',d:'Кряж Тецкатепетонко'},
+  // Нод-Край / Мондштадт (летний остров)
+  {n:'Вознесший король и Возвысившийся ферзь (Шахматы)',r:'Мондштадт',e:'♟️',d:'Игра перед вратами'},
+  {n:'Еретик ложной луны (Дотторе)',r:'Нод-Край',e:'🧪',d:'Институт ложной луны'},
+];
+
+// ====== STATE ======
+const CHAR_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край','Другое'];
+const WORLD_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край'];
+const WEEKLY_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край'];
+
+let tab = 'chars';
+let cEl    = new Set(EL.map(e=>e.id));
+let cReg   = new Set(CHAR_REGIONS);
+let cRarity= new Set(['5','4']);
+let wReg   = new Set(WORLD_REGIONS);
+let wTypes = new Set(['hypostasis','flower','dragon','mech','other']);
+let wkReg  = new Set(WEEKLY_REGIONS);
+let ownOnly= false;
+
+// Roster: load from localStorage
+let owned = new Set(JSON.parse(localStorage.getItem('genshin_owned') || '[]'));
+function saveOwned() { localStorage.setItem('genshin_owned', JSON.stringify([...owned])); }
+
+// ====== BUILD FILTERS ======
+function buildFilters() {
+  document.getElementById('el-filter').innerHTML =
+    EL.map(e=>`<button class="fbtn active" onclick="toggleF(cEl,'${e.id}',this)">${e.e} ${e.n}</button>`).join('');
+  document.getElementById('reg-filter').innerHTML =
+    CHAR_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(cReg,'${r}',this)">${r}</button>`).join('');
+  document.getElementById('wr-filter').innerHTML =
+    WORLD_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(wReg,'${r}',this)">${r}</button>`).join('');
+  document.getElementById('wkr-filter').innerHTML =
+    WEEKLY_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(wkReg,'${r}',this)">${r}</button>`).join('');
+}
+
+// ====== BUILD CHAR GRID ======
+function buildGrid() {
+  const grid = document.getElementById('char-grid');
+  grid.innerHTML = CHARS.map((c,i) => {
+    const el = EL.find(e=>e.id===c.el);
+    const isOwned = owned.has(c.n);
+    return `<div class="char-card ${isOwned?'owned':''} ${c.s===5?'char-s5':''}" onclick="toggleOwned('${c.n}',this)" title="${c.n}">
+      <div class="char-el">${el.e}</div>
+      <div class="char-name">${c.n}</div>
+    </div>`;
+  }).join('');
+  updateOwnedCount();
+}
+
+function toggleOwned(name, el) {
+  if (owned.has(name)) { owned.delete(name); el.classList.remove('owned'); }
+  else { owned.add(name); el.classList.add('owned'); }
+  saveOwned();
+  updateOwnedCount();
+  updateCount();
+}
+
+function updateOwnedCount() {
+  document.getElementById('owned-count').textContent = `${owned.size} из ${CHARS.length}`;
+}
+
+function selectAll() {
+  CHARS.forEach(c => owned.add(c.n));
+  saveOwned();
+  buildGrid();
+  updateCount();
+}
+
+function clearAll() {
+  owned.clear();
+  saveOwned();
+  buildGrid();
+  updateCount();
+}
+
+function toggleOwnOnly() {
+  ownOnly = !ownOnly;
+  const btn = document.getElementById('own-only-btn');
+  btn.classList.toggle('active', ownOnly);
+  updateCount();
+}
+
+// ====== FILTERS ======
+function toggleF(set, key, btn) {
+  if (set.has(key)) { if(set.size > 1){ set.delete(key); btn.classList.remove('active'); } }
+  else { set.add(key); btn.classList.add('active'); }
+  updateCount();
+}
+
+function filtered() {
+  if (tab === 'chars') {
+    let pool = CHARS.filter(c => cEl.has(c.el) && cReg.has(c.r) && cRarity.has(String(c.s)));
+    if (ownOnly) pool = pool.filter(c => owned.has(c.n));
+    return pool;
+  }
+  if (tab === 'world') return WORLD_BOSSES.filter(b => wReg.has(b.r) && wTypes.has(b.t));
+  return WEEKLY_BOSSES.filter(b => wkReg.has(b.r));
+}
+
+function updateCount() {
+  const n = filtered().length;
+  const total = tab==='chars' ? CHARS.length : tab==='world' ? WORLD_BOSSES.length : WEEKLY_BOSSES.length;
+  document.getElementById('count-lbl').textContent = `Подходит: ${n} из ${total}`;
+}
+
+// ====== ROLL ======
+function roll() {
+  const pool = filtered();
+  const card = document.getElementById('res-card');
+  card.classList.remove('popped');
+  void card.offsetWidth;
+  card.classList.add('popped');
+
+  if (!pool.length) {
+    document.getElementById('res-name').textContent = 'Нет совпадений';
+    document.getElementById('res-name').className = 'res-name placeholder';
+    document.getElementById('res-sub').textContent = 'Измените фильтры или добавьте персонажей в ростер';
+    document.getElementById('res-icon').textContent = '🤷';
+    document.getElementById('res-icon').style.background = '';
+    document.getElementById('res-tags').innerHTML = '';
+    card.style.setProperty('--res-glow','transparent');
+    return;
+  }
+
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  const nameEl = document.getElementById('res-name');
+  nameEl.textContent = item.n;
+  nameEl.className = 'res-name';
+
+  if (tab === 'chars') {
+    const el = EL.find(e=>e.id===item.el);
+    document.getElementById('res-icon').textContent = el.e;
+    document.getElementById('res-icon').style.background = EL_BG[item.el];
+    card.style.setProperty('--res-glow', EL_BG[item.el]);
+    document.getElementById('res-sub').textContent = item.r;
+    document.getElementById('res-tags').innerHTML =
+      `<span class="tag el-${item.el}">${el.e} ${el.n}</span>` +
+      `<span class="tag ${item.s===5?'s5-tag':'s4-tag'}">${item.s===5?'★★★★★':'★★★★'}</span>` +
+      (owned.has(item.n) ? `<span class="tag" style="background:rgba(200,169,110,0.15);color:#c8a96e">✓ в ростере</span>` : '');
+  } else if (tab === 'world') {
+    const rc = REG_BG[item.r] || '#1a1a1a';
+    document.getElementById('res-icon').textContent = item.e;
+    document.getElementById('res-icon').style.background = rc;
+    card.style.setProperty('--res-glow', rc);
+    const tn = {hypostasis:'Гипостазис',flower:'Цветок / Лоза',dragon:'Дракон / Ящер',mech:'Механический',other:'Прочее'};
+    document.getElementById('res-sub').textContent = tn[item.t];
+    document.getElementById('res-tags').innerHTML =
+      `<span class="tag reg-tag">${item.r}</span>` +
+      `<span class="tag type-tag">${tn[item.t]}</span>`;
+  } else {
+    const rc = REG_BG[item.r] || '#1a1a1a';
+    document.getElementById('res-icon').textContent = item.e;
+    document.getElementById('res-icon').style.background = rc;
+    card.style.setProperty('--res-glow', rc);
+    document.getElementById('res-sub').textContent = item.d;
+    document.getElementById('res-tags').innerHTML =
+      `<span class="tag reg-tag">${item.r}</span>`;
+  }
+}
+
+// ====== TAB SWITCH ======
+function switchTab(t) {
+  tab = t;
+  ['chars','world','weekly'].forEach((id,i) => {
+    document.querySelectorAll('.tab')[i].classList.toggle('active', id===t);
+    document.getElementById(id+'-section').style.display = id===t?'':'none';
+  });
+  // reset result
+  document.getElementById('res-name').textContent = 'Нажмите кнопку ниже';
+  document.getElementById('res-name').className = 'res-name placeholder';
+  document.getElementById('res-sub').textContent = 'и получите случайный результат';
+  document.getElementById('res-icon').textContent = '✦';
+  document.getElementById('res-icon').style.background = '';
+  document.getElementById('res-tags').innerHTML = '';
+  document.getElementById('res-card').style.setProperty('--res-glow','transparent');
+  updateCount();
+}
+
+// ====== INIT ======
+buildFilters();
+buildGrid();
+updateCount();
+</script>
+</body>
+</html>
