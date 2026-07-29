@@ -121,6 +121,37 @@ body::before {
 .res-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .tag { padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
 
+/* Result artwork */
+.res-art { display: none; margin-top: 0.9rem; text-align: center; }
+.res-art img {
+  max-width: 100%;
+  max-height: 360px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  box-shadow: 0 10px 34px rgba(0,0,0,0.45), 0 0 26px var(--glow);
+  animation: pop 0.3s ease;
+}
+
+/* Sound toggle */
+.sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  border: 1px solid var(--border2);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sound-btn:hover { color: var(--text); border-color: rgba(200,169,110,0.4); }
+.sound-btn.on { color: var(--accent2); border-color: var(--accent); background: rgba(200,169,110,0.12); }
+.sound-row { text-align: center; margin-bottom: 1.5rem; }
+
 /* Roll button */
 .roll-btn {
   width: 100%;
@@ -244,9 +275,13 @@ body::before {
       <div class="res-tags" id="res-tags"></div>
     </div>
   </div>
+  <div class="res-art" id="res-art"><img id="res-img" alt=""></div>
 </div>
 
 <button class="roll-btn" onclick="roll()">⚂ Случайный выбор</button>
+<div class="sound-row">
+  <button class="sound-btn" id="sound-btn" onclick="toggleSound()">🔇 Звук выкл.</button>
+</div>
 <div class="count-label" id="count-lbl"></div>
 
 <!-- Chars filters -->
@@ -740,6 +775,65 @@ function updateCount() {
   document.getElementById('count-lbl').textContent = `Подходит: ${n} из ${total}`;
 }
 
+// ====== MEDIA (картинки + звук) ======
+// Картинки кладите в папку images/, звуки — в sounds/.
+// Имя файла = имя персонажа/босса (напр. "Эмбер.png", "Эмбер.mp3").
+const IMG_EXT = ['png','jpg','jpeg','webp','gif'];
+const SND_EXT = ['mp3','ogg','wav','m4a'];
+let soundOn = localStorage.getItem('genshin_sound') === '1';
+
+// Превращает имя в безопасное имя файла (убирает / : « » и т.п.)
+function mediaSlug(name) {
+  return name.replace(/[\/\\:«»?*<>|"]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function showResultImage(name) {
+  const box = document.getElementById('res-art');
+  const img = document.getElementById('res-img');
+  const s = mediaSlug(name);
+  let i = 0;
+  img.onload = () => { box.style.display = 'block'; };
+  img.onerror = () => {
+    i++;
+    if (i < IMG_EXT.length) img.src = `images/${encodeURIComponent(s)}.${IMG_EXT[i]}`;
+    else { box.style.display = 'none'; img.removeAttribute('src'); }
+  };
+  box.style.display = 'none';
+  img.src = `images/${encodeURIComponent(s)}.${IMG_EXT[0]}`;
+}
+
+function hideResultImage() {
+  const box = document.getElementById('res-art');
+  const img = document.getElementById('res-img');
+  box.style.display = 'none';
+  img.onerror = null; img.onload = null; img.removeAttribute('src');
+}
+
+function playResultSound(name) {
+  if (!soundOn) return;
+  const s = mediaSlug(name);
+  let i = 0;
+  const audio = new Audio();
+  audio.onerror = () => {
+    i++;
+    if (i < SND_EXT.length) { audio.src = `sounds/${encodeURIComponent(s)}.${SND_EXT[i]}`; audio.load(); }
+  };
+  audio.src = `sounds/${encodeURIComponent(s)}.${SND_EXT[0]}`;
+  audio.play().catch(() => {});
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  localStorage.setItem('genshin_sound', soundOn ? '1' : '0');
+  updateSoundBtn();
+}
+
+function updateSoundBtn() {
+  const btn = document.getElementById('sound-btn');
+  btn.classList.toggle('on', soundOn);
+  btn.textContent = soundOn ? '🔊 Звук вкл.' : '🔇 Звук выкл.';
+}
+
 // ====== ROLL ======
 function roll() {
   const pool = filtered();
@@ -756,6 +850,7 @@ function roll() {
     document.getElementById('res-icon').style.background = '';
     document.getElementById('res-tags').innerHTML = '';
     card.style.setProperty('--res-glow','transparent');
+    hideResultImage();
     return;
   }
 
@@ -763,8 +858,12 @@ function roll() {
   const nameEl = document.getElementById('res-name');
   nameEl.textContent = item.n;
   nameEl.className = 'res-name';
+  hideResultImage();
 
   if (tab === 'chars') {
+    showResultImage(item.n);
+    playResultSound(item.n);
+
     const el = EL.find(e=>e.id===item.el);
     document.getElementById('res-icon').textContent = el.e;
     document.getElementById('res-icon').style.background = EL_BG[item.el];
@@ -811,6 +910,8 @@ function switchTab(t) {
     document.querySelectorAll('.tab')[i].classList.toggle('active', id===t);
     document.getElementById(id+'-section').style.display = id===t?'':'none';
   });
+  // Картинка и звук — только в разделе «Персонажи»
+  document.querySelector('.sound-row').style.display = t==='chars' ? '' : 'none';
   // reset result
   document.getElementById('res-name').textContent = 'Нажмите кнопку ниже';
   document.getElementById('res-name').className = 'res-name placeholder';
@@ -819,12 +920,14 @@ function switchTab(t) {
   document.getElementById('res-icon').style.background = '';
   document.getElementById('res-tags').innerHTML = '';
   document.getElementById('res-card').style.setProperty('--res-glow','transparent');
+  hideResultImage();
   updateCount();
 }
 
 // ====== INIT ======
 buildFilters();
 buildGrid();
+updateSoundBtn();
 updateCount();
 </script>
 </body>
