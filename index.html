@@ -192,6 +192,9 @@ body::before {
 .roster-btn { padding: 4px 12px; font-size: 11px; font-family: 'Nunito', sans-serif; font-weight: 600; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
 .roster-btn:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
 
+/* Roster filters */
+.roster-filters { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0.85rem; }
+
 /* Character grid */
 .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
 .char-card {
@@ -319,6 +322,10 @@ body::before {
         <button class="roster-btn" onclick="selectAll()">Все</button>
         <button class="roster-btn" onclick="clearAll()">Сбросить</button>
       </div>
+    </div>
+    <div class="roster-filters">
+      <div class="filter-row" id="grid-el-filter"></div>
+      <div class="filter-row" id="grid-reg-filter"></div>
     </div>
     <div class="char-grid" id="char-grid"></div>
   </div>
@@ -671,7 +678,7 @@ const LEGENDS = [
 ];
 
 // ====== STATE ======
-const CHAR_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край','Другое'];
+const CHAR_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Снежная','Нод-Край','Другое'];
 const WORLD_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край','Луна'];
 const WEEKLY_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край'];
 const LEGEND_REGIONS = ['Фонтейн','Натлан','Нод-Край'];
@@ -685,6 +692,9 @@ let wTypes = new Set(['hypostasis','flower','dragon','mech','other']);
 let wkReg  = new Set(WEEKLY_REGIONS);
 let lgReg  = new Set(LEGEND_REGIONS);
 let ownOnly= false;
+// Фильтры сетки ростера (независимы от фильтров рулетки)
+let gEl  = new Set(EL.map(e=>e.id));
+let gReg = new Set(CHAR_REGIONS);
 
 // Roster: load from localStorage
 let owned = new Set(JSON.parse(localStorage.getItem('genshin_owned') || '[]'));
@@ -702,19 +712,34 @@ function buildFilters() {
     WEEKLY_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(wkReg,'${r}',this)">${r}</button>`).join('');
   document.getElementById('lgr-filter').innerHTML =
     LEGEND_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(lgReg,'${r}',this)">${r}</button>`).join('');
+  document.getElementById('grid-el-filter').innerHTML =
+    EL.map(e=>`<button class="fbtn active" title="${e.n}" onclick="toggleGridF(gEl,'${e.id}',this)">${e.e} ${e.n}</button>`).join('');
+  document.getElementById('grid-reg-filter').innerHTML =
+    CHAR_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleGridF(gReg,'${r}',this)">${r}</button>`).join('');
+}
+
+// Переключение фильтра сетки: пустая группа = показывать все
+function toggleGridF(set, key, btn) {
+  if (set.has(key)) { set.delete(key); btn.classList.remove('active'); }
+  else { set.add(key); btn.classList.add('active'); }
+  buildGrid();
 }
 
 // ====== BUILD CHAR GRID ======
 function buildGrid() {
   const grid = document.getElementById('char-grid');
-  grid.innerHTML = CHARS.map((c,i) => {
+  const list = CHARS.filter(c =>
+    (gEl.size===0  || gEl.has(c.el)) &&
+    (gReg.size===0 || gReg.has(c.r))
+  );
+  grid.innerHTML = list.map(c => {
     const el = EL.find(e=>e.id===c.el);
     const isOwned = owned.has(c.n);
     return `<div class="char-card ${isOwned?'owned':''} ${c.s===5?'char-s5':''}" onclick="toggleOwned('${c.n}',this)" title="${c.n}">
       <div class="char-el">${el.e}</div>
       <div class="char-name">${c.n}</div>
     </div>`;
-  }).join('');
+  }).join('') || `<div style="color:var(--text3);font-size:12px;padding:8px">Нет персонажей по выбранным фильтрам</div>`;
   updateOwnedCount();
 }
 
