@@ -224,13 +224,14 @@ body::before {
 
 <div class="header">
   <h1>✦ Genshin Randomizer ✦</h1>
-  <p>Патч 6.5 · 120+ персонажей · 44 мировых босса · 13 еженедельных</p>
+  <p>Патч 6.7 · 120+ персонажей · 44 мировых босса · 13 еженедельных · 47 местных легенд</p>
 </div>
 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('chars')">Персонажи</button>
   <button class="tab" onclick="switchTab('world')">Мировые боссы</button>
   <button class="tab" onclick="switchTab('weekly')">Еженедельные</button>
+  <button class="tab" onclick="switchTab('legend')">Легенды</button>
 </div>
 
 <!-- Result -->
@@ -318,6 +319,16 @@ body::before {
   </div>
 </div>
 
+<!-- Local legend filters -->
+<div id="legend-section" style="display:none">
+  <div class="filter-section">
+    <div class="filter-group">
+      <div class="filter-label">Регион</div>
+      <div class="filter-row" id="lgr-filter"></div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /wrap -->
 
 <script>
@@ -358,28 +369,26 @@ const CHARS = [
   {n:'Барбара',el:'hydro',r:'Мондштадт',s:4},
   {n:'Венти',el:'anemo',r:'Мондштадт',s:5},
   {n:'Дилюк',el:'pyro',r:'Мондштадт',s:5},
-  {n:'Разор',el:'electro',r:'Мондштадт',s:4},
+  {n:'Рейзор',el:'electro',r:'Мондштадт',s:4},
   {n:'Беннетт',el:'pyro',r:'Мондштадт',s:4},
   {n:'Ноэлль',el:'geo',r:'Мондштадт',s:4},
   {n:'Фишль',el:'electro',r:'Мондштадт',s:4},
   {n:'Кли',el:'pyro',r:'Мондштадт',s:5},
-  {n:'Жан',el:'anemo',r:'Мондштадт',s:5},
   {n:'Альбедо',el:'geo',r:'Мондштадт',s:5},
   {n:'Розария',el:'cryo',r:'Мондштадт',s:4},
   {n:'Эола',el:'cryo',r:'Мондштадт',s:5},
   {n:'Мика',el:'cryo',r:'Мондштадт',s:4},
-  {n:'Ягода',el:'anemo',r:'Мондштадт',s:4},
   {n:'Дурин',el:'pyro',r:'Мондштадт',s:5},
   {n:'Варка',el:'anemo',r:'Мондштадт',s:5},
+  {n:'Лоэн',el:'cryo',r:'Мондштадт',s:5},
   {n:'Диона',el:'cryo',r:'Мондштадт',s:4},
   {n:'Мона',el:'hydro',r:'Мондштадт',s:5},
   {n:'Джинн',el:'anemo',r:'Мондштадт',s:5},
   {n:'Сахароза',el:'anemo',r:'Мондштадт',s:4},
   {n:'Далия',el:'hydro',r:'Мондштадт',s:4},
-  {n:'Прюн',el:'anemo',r:'Мондштадт',s:5},
-  {n:'Лоэн',el:'cryo',r:'Мондштадт',s:5},
+  {n:'Прюн',el:'anemo',r:'Мондштадт',s:4},
   // Ли Юэ
-  {n:'Сяо',el:'anemo',r:'Ли Юэ',s:5},
+  {n:'СоСяо',el:'anemo',r:'Ли Юэ',s:5},
   {n:'Гань Юй',el:'cryo',r:'Ли Юэ',s:5},
   {n:'Чжун Ли',el:'geo',r:'Ли Юэ',s:5},
   {n:'Ху Тао',el:'pyro',r:'Ли Юэ',s:5},
@@ -393,7 +402,6 @@ const CHARS = [
   {n:'Синь Цю',el:'hydro',r:'Ли Юэ',s:4},
   {n:'Синь Янь',el:'pyro',r:'Ли Юэ',s:4},
   {n:'Юнь Цзинь',el:'geo',r:'Ли Юэ',s:4},
-  {n:'Сяолу',el:'geo',r:'Ли Юэ',s:4},
   {n:'Яо Яо',el:'dendro',r:'Ли Юэ',s:4},
   {n:'Ци Ци',el:'cryo',r:'Ли Юэ',s:5},
   {n:'Ка Мин',el:'pyro',r:'Ли Юэ',s:4},
@@ -441,7 +449,6 @@ const CHARS = [
   {n:'Фурина',el:'hydro',r:'Фонтейн',s:5},
   {n:'Навия',el:'geo',r:'Фонтейн',s:5},
   {n:'Клоринда',el:'electro',r:'Фонтейн',s:5},
-  {n:'Инеффа',el:'electro',r:'Фонтейн',s:5},
   {n:'Эскофье',el:'cryo',r:'Фонтейн',s:5},
   {n:'Сиджвин',el:'hydro',r:'Фонтейн',s:5},
   {n:'Эмилия',el:'dendro',r:'Фонтейн',s:5},
@@ -460,13 +467,13 @@ const CHARS = [
   {n:'Иансан',el:'electro',r:'Натлан',s:4},
   {n:'Качина',el:'geo',r:'Натлан',s:4},
   {n:'Оророн',el:'electro',r:'Натлан',s:4},
-  {n:'Айно',el:'hydro',r:'Натлан',s:4},
   {n:'Ифа',el:'anemo',r:'Натлан',s:4},
   {n:'Вареса',el:'electro',r:'Натлан',s:5},
   // Снежная
   {n:'Тарталья',el:'hydro',r:'Снежная',s:5},
   {n:'Арлекино',el:'pyro',r:'Снежная',s:5},
-  {n:'Николь Рейн',el:'pyro',r:'Снежная',s:5},
+  {n:'Сандроне',el:'cryo',r:'Снежная',s:5},
+
   // Нод-Край
   {n:'Флинс',el:'electro',r:'Нод-Край',s:5},
   {n:'Нефер',el:'dendro',r:'Нод-Край',s:5},
@@ -474,13 +481,26 @@ const CHARS = [
   {n:'Лаума',el:'dendro',r:'Нод-Край',s:5},
   {n:'Иллуги',el:'geo',r:'Нод-Край',s:4},
   {n:'Линнея',el:'geo',r:'Нод-Край',s:5},
-  {n:'Ягода (Нод-Край)',el:'anemo',r:'Нод-Край',s:4},
-  {n:'Инеффа (Нод-Край)',el:'electro',r:'Нод-Край',s:5},
+  {n:'Ягода',el:'anemo',r:'Нод-Край',s:4},
+  {n:'Инеффа',el:'electro',r:'Нод-Край',s:5},
+  {n:'Николь Рейн',el:'pyro',r:'Нод-Край',s:5},
+  {n:'Айно',el:'hydro',r:'Нод-Край',s:4},
   // Тейват / Другое
   {n:'Путешественник',el:'anemo',r:'Другое',s:5},
+  {n:'Путешественник',el:'hydro',r:'Другое',s:5},
+  {n:'Путешественник',el:'pyro',r:'Другое',s:5},
+  {n:'Путешественник',el:'dendro',r:'Другое',s:5},
+  {n:'Путешественник',el:'geo',r:'Другое',s:5},
+  {n:'Путешественник',el:'electro',r:'Другое',s:5},
   {n:'Скирк',el:'cryo',r:'Другое',s:5},
   {n:'Элой',el:'cryo',r:'Другое',s:5},
-  {n:'Дайнслейф',el:'anemo',r:'Другое',s:5},
+  {n:'Манекен',el:'cryo',r:'Другое',s:5},
+  {n:'Манекен',el:'electro',r:'Другое',s:5},
+  {n:'Манекен',el:'pyro',r:'Другое',s:5},
+  {n:'Манекен',el:'dendro',r:'Другое',s:5},
+  {n:'Манекен',el:'hydro',r:'Другое',s:5},
+  {n:'Манекен',el:'anemo',r:'Другое',s:5},
+  {n:'Манекен',el:'geo',r:'Другое',s:5},
 ];
 
 const WORLD_BOSSES = [
@@ -489,6 +509,7 @@ const WORLD_BOSSES = [
   {n:'Крио папоротник',r:'Мондштадт',t:'flower',e:'❄️'},
   {n:'Электро гипостазис',r:'Мондштадт',t:'hypostasis',e:'⚡'},
   {n:'Крио гипостазис',r:'Мондштадт',t:'hypostasis',e:'❄️'},
+  {n:'Созерцатель: Падший страж',r:'Мондштадт',t:'mech',e:'🤖'},
   // Ли Юэ (6)
   {n:'Гео гипостазис',r:'Ли Юэ',t:'hypostasis',e:'🪨'},
   {n:'Океанид',r:'Ли Юэ',t:'other',e:'💧'},
@@ -534,7 +555,6 @@ const WORLD_BOSSES = [
   {n:'Сверхтяжёлый сухопутный крейсер: Мобильная крепость',r:'Нод-Край',t:'mech',e:'🚂'},
   {n:'Повелитель скрытых глубин: Шёпот кошмаров',r:'Нод-Край',t:'other',e:'🕷️'},
   {n:'Лучезарный лунный геккон',r:'Нод-Край',t:'other',e:'🦎'},
-  {n:'Созерцатель: Падший страж',r:'Нод-Край',t:'mech',e:'🤖'},
 ];
 
 const WEEKLY_BOSSES = [
@@ -550,6 +570,7 @@ const WEEKLY_BOSSES = [
   // Сумеру
   {n:'Сёки но Ками (Странник)',r:'Сумеру',e:'💨',d:'Мастерская Дзерури'},
   {n:'Страж оазиса Апепа',r:'Сумеру',e:'🐍',d:'Владение начинаний'},
+  {n:'Вознёсшийся мастер пути ереси',r:'Сумеру',e:'🧪',d:' Оковы вселенской нирваны'},
   // Фонтейн
   {n:'Всепожирающий нарвал',r:'Фонтейн',e:'🐳',d:'Пасть пучины'},
   {n:'Слуга (Арлекино)',r:'Фонтейн',e:'🎭',d:'Руины на востоке Фонтейна'},
@@ -560,10 +581,65 @@ const WEEKLY_BOSSES = [
   {n:'Еретик ложной луны (Дотторе)',r:'Нод-Край',e:'🧪',d:'Институт ложной луны'},
 ];
 
+// Местные легенды — элитные региональные мини-боссы
+const LEGENDS = [
+  // Фонтейн (17)
+  {n:'Волшебные рыцари-близнецы',r:'Фонтейн',e:'⚔️'},
+  {n:'Окружной судья океана',r:'Фонтейн',e:'🦀'},
+  {n:'Дева озера Вивианна',r:'Фонтейн',e:'🦢'},
+  {n:'Дева озера Нинианна',r:'Фонтейн',e:'🦢'},
+  {n:'Угасающий старый солдат',r:'Фонтейн',e:'🫧'},
+  {n:'Владыка отшельников Доварху',r:'Фонтейн',e:'🫧'},
+  {n:'Меч ущелья',r:'Фонтейн',e:'⚔️'},
+  {n:'Железный виконт',r:'Фонтейн',e:'🦀'},
+  {n:'Автоматический генератор полей сверхвычислений',r:'Фонтейн',e:'⚙️'},
+  {n:'Лиахра Блистательная',r:'Фонтейн',e:'💠'},
+  {n:'Изольт',r:'Фонтейн',e:'🌊'},
+  {n:'Шассанион',r:'Фонтейн',e:'🐟'},
+  {n:'Деянейра Снежневна',r:'Фонтейн',e:'❄️'},
+  {n:'Роки Авилдсен',r:'Фонтейн',e:'🌊'},
+  {n:'Магический меч Круж',r:'Фонтейн',e:'🗡️'},
+  {n:'Лиям',r:'Фонтейн',e:'🐟'},
+  {n:'Киней',r:'Фонтейн',e:'🐟'},
+  // Натлан (22)
+  {n:'Три полихромные звезды',r:'Натлан',e:'✨'},
+  {n:'Косихо',r:'Натлан',e:'🦎'},
+  {n:'Сапфо среди волн',r:'Натлан',e:'🌊'},
+  {n:'Балачко',r:'Натлан',e:'🔥'},
+  {n:'Сиуакоатль Химерной Кости',r:'Натлан',e:'🐊'},
+  {n:'Никогда Не Умирающий',r:'Натлан',e:'💀'},
+  {n:'Тлатцакуилотль',r:'Натлан',e:'🦖'},
+  {n:'Покровительство Ичкауипильи',r:'Натлан',e:'🛡️'},
+  {n:'Тень Чимальи',r:'Натлан',e:'🌑'},
+  {n:'Благословение Атлатль',r:'Натлан',e:'🏹'},
+  {n:'Бронзовый замок',r:'Натлан',e:'🏰'},
+  {n:'Рилай',r:'Натлан',e:'🦅'},
+  {n:'Дух Упавшей Утренней Звезды',r:'Натлан',e:'⭐'},
+  {n:'Солидарность Потапо',r:'Натлан',e:'🐾'},
+  {n:'Содействие Тупайо',r:'Натлан',e:'🐾'},
+  {n:'Железная борода',r:'Натлан',e:'🪓'},
+  {n:'Ничтожный',r:'Натлан',e:'👤'},
+  {n:'Реджи',r:'Натлан',e:'🦴'},
+  {n:'Пик',r:'Натлан',e:'⛰️'},
+  {n:'Буйство Тупу',r:'Натлан',e:'🌋'},
+  {n:'Боевой козёл и Железный коготь',r:'Натлан',e:'🐐'},
+  {n:'Последний выживший из Теночцитока',r:'Натлан',e:'🗿'},
+  // Нод-Край (8)
+  {n:'Царь-краб, хозяин дворца',r:'Нод-Край',e:'🦀'},
+  {n:'Сигурд, поклявшийся истребить Дикую Охоту',r:'Нод-Край',e:'⚔️'},
+  {n:'Лейтенант Фатуи Раскольников',r:'Нод-Край',e:'🎖️'},
+  {n:'Лабораторный образец «Шестнадцатикратная мандрагора»',r:'Нод-Край',e:'🌱'},
+  {n:'Старая ведьма Хильетта',r:'Нод-Край',e:'🧙'},
+  {n:'Клык пустошей: волк-одиночка',r:'Нод-Край',e:'🐺'},
+  {n:'Автоматон Муштешир «Взирающий на звёзды»',r:'Нод-Край',e:'🤖'},
+  {n:'Призматический слайм «Отблеск творения»',r:'Нод-Край',e:'🔮'},
+];
+
 // ====== STATE ======
 const CHAR_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край','Другое'];
-const WORLD_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край'];
+const WORLD_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край','Луна'];
 const WEEKLY_REGIONS = ['Мондштадт','Ли Юэ','Инадзума','Сумеру','Фонтейн','Натлан','Нод-Край'];
+const LEGEND_REGIONS = ['Фонтейн','Натлан','Нод-Край'];
 
 let tab = 'chars';
 let cEl    = new Set(EL.map(e=>e.id));
@@ -572,6 +648,7 @@ let cRarity= new Set(['5','4']);
 let wReg   = new Set(WORLD_REGIONS);
 let wTypes = new Set(['hypostasis','flower','dragon','mech','other']);
 let wkReg  = new Set(WEEKLY_REGIONS);
+let lgReg  = new Set(LEGEND_REGIONS);
 let ownOnly= false;
 
 // Roster: load from localStorage
@@ -588,6 +665,8 @@ function buildFilters() {
     WORLD_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(wReg,'${r}',this)">${r}</button>`).join('');
   document.getElementById('wkr-filter').innerHTML =
     WEEKLY_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(wkReg,'${r}',this)">${r}</button>`).join('');
+  document.getElementById('lgr-filter').innerHTML =
+    LEGEND_REGIONS.map(r=>`<button class="fbtn active" onclick="toggleF(lgReg,'${r}',this)">${r}</button>`).join('');
 }
 
 // ====== BUILD CHAR GRID ======
@@ -651,12 +730,13 @@ function filtered() {
     return pool;
   }
   if (tab === 'world') return WORLD_BOSSES.filter(b => wReg.has(b.r) && wTypes.has(b.t));
-  return WEEKLY_BOSSES.filter(b => wkReg.has(b.r));
+  if (tab === 'weekly') return WEEKLY_BOSSES.filter(b => wkReg.has(b.r));
+  return LEGENDS.filter(b => lgReg.has(b.r));
 }
 
 function updateCount() {
   const n = filtered().length;
-  const total = tab==='chars' ? CHARS.length : tab==='world' ? WORLD_BOSSES.length : WEEKLY_BOSSES.length;
+  const total = tab==='chars' ? CHARS.length : tab==='world' ? WORLD_BOSSES.length : tab==='weekly' ? WEEKLY_BOSSES.length : LEGENDS.length;
   document.getElementById('count-lbl').textContent = `Подходит: ${n} из ${total}`;
 }
 
@@ -704,7 +784,7 @@ function roll() {
     document.getElementById('res-tags').innerHTML =
       `<span class="tag reg-tag">${item.r}</span>` +
       `<span class="tag type-tag">${tn[item.t]}</span>`;
-  } else {
+  } else if (tab === 'weekly') {
     const rc = REG_BG[item.r] || '#1a1a1a';
     document.getElementById('res-icon').textContent = item.e;
     document.getElementById('res-icon').style.background = rc;
@@ -712,13 +792,22 @@ function roll() {
     document.getElementById('res-sub').textContent = item.d;
     document.getElementById('res-tags').innerHTML =
       `<span class="tag reg-tag">${item.r}</span>`;
+  } else {
+    const rc = REG_BG[item.r] || '#1a1a1a';
+    document.getElementById('res-icon').textContent = item.e;
+    document.getElementById('res-icon').style.background = rc;
+    card.style.setProperty('--res-glow', rc);
+    document.getElementById('res-sub').textContent = 'Местная легенда';
+    document.getElementById('res-tags').innerHTML =
+      `<span class="tag reg-tag">${item.r}</span>` +
+      `<span class="tag type-tag">Местная легенда</span>`;
   }
 }
 
 // ====== TAB SWITCH ======
 function switchTab(t) {
   tab = t;
-  ['chars','world','weekly'].forEach((id,i) => {
+  ['chars','world','weekly','legend'].forEach((id,i) => {
     document.querySelectorAll('.tab')[i].classList.toggle('active', id===t);
     document.getElementById(id+'-section').style.display = id===t?'':'none';
   });
